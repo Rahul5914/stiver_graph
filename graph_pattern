@@ -1,0 +1,109 @@
+**PDF 1: Grid BFS/DFS + Flood Fill Family**
+
+# 1. Grid DFS/BFS Template
+
+```cpp
+class Solution {
+public:
+    int n, m;
+    vector<vector<int>> dirs = {{1,0}, {-1,0}, {0,1}, {0,-1}};
+
+    bool isValid(int r, int c) { return r>=0 && r<n && c>=0 && c<m; }
+
+    void dfs(vector<vector<int>>& grid, int r, int c, int oldColor, int newColor) {
+        if(!isValid(r,c) || grid[r][c]!=oldColor) return;
+        grid[r][c] = newColor;
+        for(auto &d: dirs) dfs(grid,r+d[0],c+d[1],oldColor,newColor);
+    }
+
+    vector<vector<int>> floodFill(vector<vector<int>>& image, int sr, int sc, int newColor) {
+        n = image.size(); m = image[0].size();
+        int oldColor = image[sr][sc];
+        if(oldColor==newColor) return image;
+        dfs(image,sr,sc,oldColor,newColor);
+        return image;
+    }
+}
+```
+
+# 2. Number of Islands / Max Area / Enclaves / Surrounded Regions
+
+* Change the marking inside DFS and optionally count area or flip symbols.
+* Visualize DFS spreading to all connected cells.
+
+# 3. 01 Matrix / Rotting Oranges (Multi-source BFS)
+
+* BFS queue initialization from all starting points (0s or rotten oranges).
+* Propagate level by level.
+
+```cpp
+queue<pair<int,int>> q;
+for(all start cells) { q.push({r,c}); visited[r][c]=1; }
+while(!q.empty()) {
+    auto [r,c] = q.front(); q.pop();
+    for(auto &d: dirs){
+        int nr = r+d[0], nc=c+d[1];
+        if(inbound && not visited){
+            dist[nr][nc]=dist[r][c]+1; q.push({nr,nc});
+        }
+    }
+}
+```
+
+# PDF 2: Graph Patterns
+
+# 1. Cycle Detection
+
+* Undirected: check neighbor != parent.
+* Directed: use recursion stack.
+
+# 2. Bipartite Graph Coloring
+
+```cpp
+vector<int> color(n,-1);
+queue<int> q;
+color[start]=0;
+while(!q.empty()){
+    int node=q.front(); q.pop();
+    for(auto nbr: graph[node]){
+        if(color[nbr]==-1){ color[nbr]=1-color[node]; q.push(nbr); }
+        else if(color[nbr]==color[node]) return false;
+    }
+}
+```
+
+# 3. BFS Shortest Path (Word Ladder / 0/1 Matrix)
+
+* Multi-source BFS.
+* Level increments = distance.
+
+# 4. Topological Sort (DFS & BFS/Kahn)
+
+* DFS post-order reversed.
+* BFS via in-degree queue.
+
+# 5. Union-Find / DSU
+
+```cpp
+vector<int> parent(n);
+for(int i=0;i<n;i++) parent[i]=i;
+function<int(int)> find=[&](int x){ return parent[x]==x?x:parent[x]=find(parent[x]); };
+function<void(int,int)> unite=[&](int a,int b){ parent[find(a)]=find(b); };
+```
+
+# 6. SCC / Bridges / Articulation Points
+
+* Use Tarjan/Kosaraju.
+* DFS + low-link values.
+
+# Mental Map Table
+
+| Pattern       | Traversal  | Goal               |
+| ------------- | ---------- | ------------------ |
+| Grid DFS/BFS  | DFS/BFS    | Connected / Fill   |
+| Cycle         | DFS        | Detect loop        |
+| Bipartite     | BFS/DFS    | 2-color check      |
+| BFS Shortest  | BFS        | Minimum steps      |
+| Topo Sort     | DFS/BFS    | Linear order       |
+| DSU           | Union-Find | Merge components   |
+| SCC / Bridges | DFS        | Strong connections |
