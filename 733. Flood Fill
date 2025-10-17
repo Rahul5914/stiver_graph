@@ -1,0 +1,238 @@
+let’s do LeetCode 733. Flood Fill in Nutanix / FAANG-style interview format (debug + optimization + dry run + reusable template).
+
+🎯 Problem Statement
+
+You are given an image represented by a 2D grid of integers image[m][n], where each value represents the color of a pixel.
+You are also given three integers:
+
+(sr, sc) — the starting pixel coordinates
+
+color — the new color
+
+Perform a flood fill starting from (sr, sc):
+
+Replace the color of (sr, sc) and all 4-directionally connected pixels with the same original color with the new color.
+Return the modified image.
+
+🔍 Sample Input / Output
+
+Input:
+
+image = [
+  [1,1,1],
+  [1,1,0],
+  [1,0,1]
+]
+sr = 1, sc = 1, color = 2
+
+
+Output:
+
+[
+  [2,2,2],
+  [2,2,0],
+  [2,0,1]
+]
+
+👨‍💼 Interviewer–Candidate Dialogue (Nutanix-style)
+Interviewer:
+
+Can you explain what this problem is asking in your own words?
+
+Candidate:
+
+Yes! It’s like the paint bucket tool in MS Paint — we start coloring from one pixel, and all the neighboring pixels that have the same original color and are connected (up, down, left, right) also get filled with the new color.
+
+Interviewer:
+
+What kind of algorithm does this remind you of?
+
+Candidate:
+
+It looks like a graph traversal problem — specifically a DFS (Depth-First Search) or BFS (Breadth-First Search) on a grid.
+
+Each cell is a node, and edges exist between adjacent cells (up, down, left, right).
+
+Interviewer:
+
+Good. What’s the base condition you’d use?
+
+Candidate:
+
+We stop when:
+
+The current pixel is out of bounds, or
+
+Its color is different from the starting color, or
+
+It’s already been colored with the new color (to prevent infinite loops).
+
+Interviewer:
+
+Can you first write a recursive DFS version?
+
+✅ Step 1: Recursive DFS Solution
+🧠 Recurrence Relation
+fill(r, c):
+    if (r, c) is out of bounds or image[r][c] != original_color:
+        return
+    image[r][c] = new_color
+    for each direction in [up, down, left, right]:
+        fill(next_r, next_c)
+
+🧩 Code (DFS - Recursive)
+class Solution {
+public:
+    void dfs(vector<vector<int>>& image, int r, int c, int newColor, int originalColor) {
+        int m = image.size(), n = image[0].size();
+        if (r < 0 || c < 0 || r >= m || c >= n) return;           // boundary check
+        if (image[r][c] != originalColor || image[r][c] == newColor) return; // stop condition
+        
+        image[r][c] = newColor; // fill the pixel
+        
+        // 4-directional movement
+        dfs(image, r+1, c, newColor, originalColor);
+        dfs(image, r-1, c, newColor, originalColor);
+        dfs(image, r, c+1, newColor, originalColor);
+        dfs(image, r, c-1, newColor, originalColor);
+    }
+
+    vector<vector<int>> floodFill(vector<vector<int>>& image, int sr, int sc, int newColor) {
+        int originalColor = image[sr][sc];
+        if (originalColor != newColor)
+            dfs(image, sr, sc, newColor, originalColor);
+        return image;
+    }
+};
+
+🧩 Dry Run
+
+Input:
+
+image = [[1,1,1],
+         [1,1,0],
+         [1,0,1]]
+sr = 1, sc = 1, newColor = 2
+
+
+Start (1,1): originalColor = 1
+→ Fill (1,1) = 2
+→ DFS(0,1), DFS(2,1), DFS(1,0), DFS(1,2)
+
+DFS(0,1): fill → DFS(0,0), DFS(0,2)
+
+DFS(0,0): fill → DFS(1,0)
+
+DFS(0,2): fill → DFS(1,2)
+
+DFS(2,1): stop (different color 0)
+
+DFS(1,2): stop (different color 0)
+
+✅ Final Image:
+
+2 2 2
+2 2 0
+2 0 1
+
+⏱️ Time Complexity
+
+O(m × n) — each cell is visited once at most.
+
+💾 Space Complexity
+
+O(m × n) in worst case (recursion stack).
+
+Interviewer:
+
+Nice! Can you also write the iterative BFS version to avoid stack overflow?
+
+✅ Step 2: BFS (Iterative) Solution
+
+We can use a queue for BFS traversal.
+
+🧩 Code (BFS)
+class Solution {
+public:
+    vector<vector<int>> floodFill(vector<vector<int>>& image, int sr, int sc, int newColor) {
+        int m = image.size(), n = image[0].size();
+        int originalColor = image[sr][sc];
+        if (originalColor == newColor) return image;
+
+        queue<pair<int,int>> q;
+        q.push({sr, sc});
+        image[sr][sc] = newColor;
+
+        int dr[4] = {-1, 1, 0, 0};
+        int dc[4] = {0, 0, -1, 1};
+
+        while (!q.empty()) {
+            auto [r, c] = q.front();
+            q.pop();
+
+            for (int i = 0; i < 4; i++) {
+                int nr = r + dr[i], nc = c + dc[i];
+                if (nr >= 0 && nc >= 0 && nr < m && nc < n && image[nr][nc] == originalColor) {
+                    image[nr][nc] = newColor;
+                    q.push({nr, nc});
+                }
+            }
+        }
+        return image;
+    }
+};
+
+⏱️ Time Complexity
+
+O(m × n) (each cell visited once)
+
+💾 Space Complexity
+
+O(m × n) for queue (worst case)
+
+Interviewer:
+
+What’s the difference between DFS and BFS here?
+
+Candidate:
+
+DFS uses recursion (stack), BFS uses queue.
+
+Both visit all reachable same-color cells.
+
+BFS avoids recursion depth issues for large grids.
+
+🧩 Pattern Recognition
+Concept	Pattern
+Type	Grid-based DFS/BFS (flood fill)
+Direction	4 or 8 directions
+Template	Used in “Number of Islands”, “Rotting Oranges”, “Surrounded Regions”, “Connected Components”
+Key Trick	Always check bounds and visited (or color != originalColor)
+Common Bug	Not checking if (originalColor == newColor) → infinite recursion
+🧠 Reusable Flood Fill Template (for revision)
+void traverse(vector<vector<int>>& grid, int r, int c, int target, int replacement) {
+    int m = grid.size(), n = grid[0].size();
+    if (r < 0 || c < 0 || r >= m || c >= n) return;
+    if (grid[r][c] != target) return;
+
+    grid[r][c] = replacement;
+    int dr[4] = {-1, 1, 0, 0};
+    int dc[4] = {0, 0, -1, 1};
+
+    for (int i = 0; i < 4; i++)
+        traverse(grid, r + dr[i], c + dc[i], target, replacement);
+}
+
+🧭 Follow-up Interview Questions
+
+Can we make this work for 8 directions?
+→ Yes, just include diagonal directions.
+
+What if we need to count regions (connected components)?
+→ Replace coloring logic with a counter — classic “Number of Islands” problem.
+
+What if grid is very large (10⁵×10⁵)?
+→ Use iterative BFS to avoid recursion overflow.
+
+What if color = vector (RGB)?
+→ Then compare tuples (r,g,b) instead of int equality.
