@@ -1,0 +1,241 @@
+Let’s do Leetcode 994. Rotting Oranges in complete interview-style — the way it’s asked in Nutanix, Google, Visa, Tower Research Capital etc.
+We’ll simulate all interview rounds — from problem understanding, debugging, to optimization — so that you never forget this pattern again.
+
+🧩 Problem: 994. Rotting Oranges
+
+Topic: Graphs → BFS (Level Order / Multi-source BFS)
+Difficulty: Medium
+Pattern: Multi-source BFS (Spread / Time-to-Propagate)
+
+🎯 Problem Statement (Interviewer-style)
+
+Interviewer:
+
+You are given an m x n grid where each cell can have one of three values:
+
+0 → empty cell
+
+1 → fresh orange
+
+2 → rotten orange
+
+Every minute, any fresh orange that is 4-directionally adjacent to a rotten one becomes rotten.
+
+Return the minimum number of minutes that must elapse until no cell has a fresh orange.
+
+If it’s impossible to rot all oranges, return -1.
+
+Example:
+Input:
+[[2,1,1],
+ [1,1,0],
+ [0,1,1]]
+
+Output:
+4
+
+
+Explanation:
+
+Minute 0 → Initial grid
+
+Minute 1 → First layer of fresh oranges rot
+
+Minute 2 → Next layer rots
+
+Minute 3 → More spread
+
+Minute 4 → All oranges rotten ✅
+
+🧠 Step 1: Clarify and Think Aloud
+
+Candidate (you):
+
+So, this looks like a spreading process — similar to BFS levels in a graph.
+Each rotten orange spreads to its 4 neighbors every minute → exactly like multi-source BFS.
+
+Key Observations:
+
+Each orange is a node in a grid graph.
+
+Each minute = one BFS level.
+
+We start BFS from all rotten oranges initially.
+
+⚙️ Step 2: Approach Discussion (like in a F2F coding round)
+Approach	Type	Time	Space	Comment
+DFS	Not suitable	Exponential	—	DFS can’t track time layers
+BFS (Multi-source)	Level order	O(m×n)	O(m×n)	Best approach
+Simulation	Inefficient	O(k×m×n)	—	Too slow
+
+✅ Use BFS from all rotten oranges → propagate level by level.
+
+🧩 Step 3: Dry Run on Example
+
+Grid:
+
+2 1 1
+1 1 0
+0 1 1
+
+
+Initial:
+
+Rotten = {(0,0)}
+
+Fresh = 7
+
+Start BFS:
+
+Minute 0: (0,0)
+→ Infect neighbors: (0,1), (1,0)
+Minute 1: (0,1), (1,0)
+→ Infect: (0,2), (1,1)
+Minute 2: (0,2), (1,1)
+→ Infect: (2,1)
+Minute 3: (2,1)
+→ Infect: (2,2)
+Minute 4: Done.
+
+
+✅ Total = 4 minutes.
+
+💻 Step 4: BFS Implementation (C++)
+C++ Code — Level Order BFS (Interview Ready)
+class Solution {
+public:
+    int orangesRotting(vector<vector<int>>& grid) {
+        int m = grid.size(), n = grid[0].size();
+        queue<pair<int,int>> q;
+        int fresh = 0;
+
+        // Step 1: Push all initially rotten oranges
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == 2) q.push({i, j});
+                else if (grid[i][j] == 1) fresh++;
+            }
+        }
+
+        // Directions: up, down, left, right
+        int dx[4] = {-1, 1, 0, 0};
+        int dy[4] = {0, 0, -1, 1};
+        int minutes = 0;
+
+        // Step 2: Multi-source BFS
+        while (!q.empty() && fresh > 0) {
+            int size = q.size();
+            while (size--) {
+                auto [x, y] = q.front(); q.pop();
+                for (int k = 0; k < 4; k++) {
+                    int nx = x + dx[k], ny = y + dy[k];
+                    if (nx >= 0 && ny >= 0 && nx < m && ny < n && grid[nx][ny] == 1) {
+                        grid[nx][ny] = 2; // rot it
+                        fresh--;
+                        q.push({nx, ny});
+                    }
+                }
+            }
+            minutes++;
+        }
+
+        return fresh == 0 ? minutes : -1;
+    }
+};
+
+🧩 Step 5: Dry Run (in Debugging Round)
+
+Interviewer (Nutanix style):
+
+Let’s debug this input:
+[[0,2]]
+
+Candidate:
+
+Only one rotten, no fresh → fresh=0 → directly return 0. ✅
+
+Another test:
+[[1,0,2]] → Fresh at (0,0) isolated from (0,2)
+→ fresh remains >0 → return -1. ✅
+
+Common bug: Forgetting to check fresh > 0 in while condition — might increment minutes one extra time.
+✅ Fix → while (!q.empty() && fresh > 0)
+
+🧩 Step 6: Complexity Analysis
+
+Time: O(m×n) → each cell visited once
+
+Space: O(m×n) → queue size in worst case
+
+🧠 Step 7: Alternative / Optimization Round
+
+Interviewer:
+
+Can we do it without using an extra visited matrix?
+
+Candidate:
+✅ Yes — we can use the grid itself to mark visited (2 = rotten).
+That’s what we did.
+
+Interviewer:
+
+What if we had to return the sequence of rotting instead of time?
+
+Candidate:
+We’d store time with each element in queue as {x, y, t}.
+
+🧩 Step 8: Follow-up & Related Patterns
+Pattern	Question	Technique
+Multi-source BFS	286. Walls and Gates	BFS from all gates
+01 Matrix	542. 01 Matrix	BFS from all 0’s
+Spread simulation	841. Keys and Rooms	BFS/DFS reachability
+Flood fill	733. Flood Fill	BFS/DFS from one source
+
+👉 Trick:
+
+If problem says “spread”, “time to infect”, “minutes to reach” → think multi-source BFS.
+
+Mnemonic:
+
+“Spread = BFS with Time as Levels”
+
+🧩 Step 9: Edge Cases Table
+Case	Input	Output	Why
+All rotten	[[2,2]]	0	No fresh oranges
+All fresh isolated	[[1,0,1]]	-1	Can’t rot all
+Empty grid	[[]]	0	No oranges
+Mix	[[2,1,1],[1,1,0],[0,1,1]]	4	Standard
+🧠 Step 10: Final Interview Summary Sheet
+Approach	Concept	Time	Space	Used in
+BFS	Multi-source BFS	O(m×n)	O(m×n)	Oranges, Gates, Matrix Distance
+DFS	Not optimal	—	—	—
+Simulation	Naive	High	—	—
+🚀 Pattern Recognition
+
+“Rotting / Spread / Infection / Fire / Distance” → Multi-source BFS
+
+BFS levels naturally represent time.
+
+Grid traversal always uses → 4-direction arrays {dx, dy}
+
+🧠 Trick to Remember (Interview Formula)
+
+“Whenever something spreads in steps → Think BFS,
+Whenever something spreads from many points at once → Think Multi-source BFS.”
+
+🧩 Template for Multi-source BFS
+queue<pair<int,int>> q;
+// push all starting sources
+while (!q.empty()) {
+    int sz = q.size();
+    while (sz--) {
+        auto [x, y] = q.front(); q.pop();
+        for (auto dir : directions) {
+            int nx = x + dir[0], ny = y + dir[1];
+            if (valid(nx, ny) && condition) {
+                q.push({nx, ny});
+            }
+        }
+    }
+    time++;
+}
