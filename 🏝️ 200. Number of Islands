@@ -1,0 +1,214 @@
+🎯 Problem Statement
+You are given an m x n binary grid representing a map of '1's (land) and '0's (water).
+
+An island is surrounded by water and formed by connecting adjacent lands horizontally or vertically.
+
+Return the number of islands.
+
+Example:
+Input:
+
+ini
+Copy code
+grid = [
+  ["1","1","0","0","0"],
+  ["1","1","0","0","0"],
+  ["0","0","1","0","0"],
+  ["0","0","0","1","1"]
+]
+Output: 3
+
+👨‍💼 Interviewer–Candidate Dialogue (Nutanix F2F style)
+Interviewer:
+What do you understand from the problem?
+
+Candidate:
+We need to count how many connected regions of '1' exist in the grid.
+Each '1' represents land, '0' represents water, and connections are 4-directional (up, down, left, right).
+
+So, this is a connected components in grid problem — same as Flood Fill, except instead of coloring, we count how many times we start a new DFS/BFS.
+
+Interviewer:
+Good. What kind of traversal can you use?
+
+Candidate:
+Either DFS (recursive or iterative) or BFS.
+Each time I find a '1', that’s a new island. I’ll start DFS/BFS to mark the entire island as '0' (visited).
+
+✅ Step 1: Recursive DFS Approach
+🧠 Core Logic / Recurrence Relation
+sql
+Copy code
+countIslands(grid):
+    for each cell (i, j):
+        if grid[i][j] == '1':
+            islands++
+            dfs(i, j)
+            
+dfs(i, j):
+    if out of bounds or grid[i][j] != '1': return
+    mark grid[i][j] = '0'  // visited
+    for each direction in [up, down, left, right]:
+        dfs(next_i, next_j)
+🧩 Code (DFS Recursive)
+cpp
+Copy code
+class Solution {
+public:
+    void dfs(vector<vector<char>>& grid, int r, int c) {
+        int m = grid.size(), n = grid[0].size();
+        if (r < 0 || c < 0 || r >= m || c >= n || grid[r][c] == '0')
+            return;
+
+        grid[r][c] = '0';  // mark as visited
+
+        int dr[4] = {-1, 1, 0, 0};
+        int dc[4] = {0, 0, -1, 1};
+
+        for (int i = 0; i < 4; i++)
+            dfs(grid, r + dr[i], c + dc[i]);
+    }
+
+    int numIslands(vector<vector<char>>& grid) {
+        int m = grid.size(), n = grid[0].size();
+        int count = 0;
+
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == '1') {
+                    count++;
+                    dfs(grid, i, j);
+                }
+            }
+        }
+        return count;
+    }
+};
+🧩 Dry Run
+Input:
+
+Copy code
+1 1 0 0 0
+1 1 0 0 0
+0 0 1 0 0
+0 0 0 1 1
+1️⃣ Found (0,0) → start DFS
+→ marks (0,0), (0,1), (1,0), (1,1) → done → count = 1
+
+2️⃣ Next island found at (2,2) → marks → count = 2
+
+3️⃣ Next island at (3,3) → marks (3,3), (3,4) → count = 3
+
+✅ Answer = 3 islands
+
+⏱️ Time Complexity
+O(m × n) — each cell is visited once.
+
+💾 Space Complexity
+O(m × n) (recursion stack in worst case).
+
+Interviewer:
+How can you make it iterative to avoid stack overflow?
+
+✅ Step 2: BFS Iterative Approach
+🧩 Code (BFS)
+cpp
+Copy code
+class Solution {
+public:
+    int numIslands(vector<vector<char>>& grid) {
+        int m = grid.size(), n = grid[0].size();
+        int count = 0;
+        int dr[4] = {-1, 1, 0, 0};
+        int dc[4] = {0, 0, -1, 1};
+
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == '1') {
+                    count++;
+                    grid[i][j] = '0';  // mark visited
+                    queue<pair<int,int>> q;
+                    q.push({i, j});
+
+                    while (!q.empty()) {
+                        auto [r, c] = q.front(); q.pop();
+                        for (int k = 0; k < 4; k++) {
+                            int nr = r + dr[k], nc = c + dc[k];
+                            if (nr >= 0 && nc >= 0 && nr < m && nc < n && grid[nr][nc] == '1') {
+                                grid[nr][nc] = '0';
+                                q.push({nr, nc});
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return count;
+    }
+};
+⏱️ Time Complexity
+O(m × n) — every cell visited once.
+
+💾 Space Complexity
+O(min(m,n)) in BFS queue (worst-case connected area).
+
+Interviewer:
+What if I asked you to include diagonals too?
+
+Candidate:
+Then I’d change directions to 8 directions:
+
+cpp
+Copy code
+int dr[8] = {-1,-1,-1,0,0,1,1,1};
+int dc[8] = {-1,0,1,-1,1,-1,0,1};
+That becomes the “Number of Islands II (8 directions)” problem.
+
+🧠 Pattern Recognition Table
+Problem	What Changes?	Core Idea
+733. Flood Fill	Color all connected pixels of same color	DFS/BFS fill
+200. Number of Islands	Count connected components of '1'	DFS/BFS count
+695. Max Area of Island	Track max size of each connected component	DFS/BFS + counter
+1020. Number of Enclaves	Flood fill from boundary to remove reachable land	Reverse thinking
+994. Rotting Oranges	BFS multi-source traversal	Time-based BFS
+
+🧩 Reusable Template (Master Flood Fill Engine)
+cpp
+Copy code
+void traverse(vector<vector<int>>& grid, int r, int c, int target, int replacement) {
+    int m = grid.size(), n = grid[0].size();
+    if (r < 0 || c < 0 || r >= m || c >= n) return;
+    if (grid[r][c] != target) return;
+
+    grid[r][c] = replacement;
+    int dr[4] = {-1, 1, 0, 0};
+    int dc[4] = {0, 0, -1, 1};
+
+    for (int i = 0; i < 4; i++)
+        traverse(grid, r + dr[i], c + dc[i], target, replacement);
+}
+Modify the replacement logic to:
+
+Color (Flood Fill)
+
+Count (Islands)
+
+Measure (Area of Island)
+
+Propagate (Rotting Oranges)
+
+🔥 Debugging Traps (Nutanix often asks in debugging rounds)
+Bug	Root Cause	Fix
+Infinite recursion	Didn’t mark visited	Mark grid[r][c] early
+Double counting islands	Didn’t convert '1' → '0' after DFS	Convert to avoid recount
+Stack overflow	Deep recursion on large connected region	Use BFS iterative
+Wrong bounds	Off-by-one in row/col check	Always check < m and < n
+
+🧭 Follow-Up Interview Questions
+Find maximum area of an island → Add counter in DFS.
+
+Find number of closed islands (surrounded by water) → Flood fill from borders first.
+
+Rotting Oranges → Multi-source BFS with time tracking.
+
+Number of Provinces → Same logic, but adjacency list instead of grid.
