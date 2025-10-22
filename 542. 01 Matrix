@@ -1,0 +1,412 @@
+this is one of the most commonly asked matrix + BFS pattern problems (Leetcode #542: 01 Matrix). It’s a direct application of multi-source BFS, which is an extension of the Rotting Oranges / Number of Islands type questions — and a must-know for interviews at companies like Nutanix, Uber, Visa, Amazon, or Google.
+
+Let’s solve it in full interview-style, step-by-step 👇
+
+🔷 Problem Statement
+Given an m x n binary matrix mat (containing only 0s and 1s), return a matrix dist where each cell dist[i][j] is the distance to the nearest 0.
+
+Distance between two adjacent cells is 1 (up/down/left/right only).
+
+🧩 Example
+Input:
+
+csharp
+Copy code
+mat = [
+  [0,0,0],
+  [0,1,0],
+  [1,1,1]
+]
+Output:
+
+csharp
+Copy code
+[
+  [0,0,0],
+  [0,1,0],
+  [1,2,1]
+]
+💬 Interview Round Simulation
+Interviewer:
+You’re given a binary matrix. For each 1, find the distance to the nearest 0. How would you start?
+
+Candidate (You):
+We could try BFS from each 1 to find the nearest 0, but that would be O((mn) * (mn)), too slow for big matrices.
+
+Instead, I’ll think in reverse:
+
+What if I start BFS from all 0s simultaneously?
+
+Then I can propagate distance outward layer by layer.
+
+This is known as a multi-source BFS approach.
+
+🧠 Key Idea — Multi-Source BFS
+Treat all 0s as starting points (sources).
+
+Initialize their distance as 0.
+
+All 1s initially have an infinite distance (INT_MAX).
+
+Run BFS and propagate the distance to neighbors.
+
+🧮 Algorithm
+Create a queue q.
+
+Push all coordinates of cells having 0 into q.
+
+Maintain a dist matrix of same size.
+
+If cell = 0, distance = 0.
+
+Else = INT_MAX initially.
+
+BFS:
+
+Pop (r, c) from q.
+
+Check all 4 directions.
+
+If neighbor has a larger distance, update it as:
+
+r
+Copy code
+dist[nr][nc] = dist[r][c] + 1
+and push (nr, nc) into q.
+
+Continue until queue is empty.
+
+🧩 Dry Run
+Input:
+csharp
+Copy code
+mat = [
+  [0,0,0],
+  [0,1,0],
+  [1,1,1]
+]
+Initialization:
+
+Queue initially = all zero cells:
+
+css
+Copy code
+[(0,0), (0,1), (0,2), (1,0), (1,2)]
+dist =
+
+css
+Copy code
+[ [0,0,0],
+  [0,∞,0],
+  [∞,∞,∞] ]
+Now BFS propagation 👇
+
+From (0,0): neighbor (1,0) already 0 → skip
+
+From (1,0): neighbor (2,0) updated to 1
+
+From (1,2): neighbor (2,2) updated to 1
+
+From (2,0) or (2,2) → middle (2,1) updated to 2
+
+Also (1,1) updated to 1 (from top and sides)
+
+Final dist =
+
+css
+Copy code
+[ [0,0,0],
+  [0,1,0],
+  [1,2,1] ]
+✅ Matches expected output.
+
+🧑‍💻 Code — C++ (Interview-ready, clean, fully commented)
+cpp
+Copy code
+class Solution {
+public:
+    vector<vector<int>> updateMatrix(vector<vector<int>>& mat) {
+        int n = mat.size(), m = mat[0].size();
+        vector<vector<int>> dist(n, vector<int>(m, INT_MAX));
+        queue<pair<int,int>> q;
+
+        // Step 1: Push all 0s into queue
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (mat[i][j] == 0) {
+                    dist[i][j] = 0;
+                    q.push({i, j});
+                }
+            }
+        }
+
+        // Directions: up, right, down, left
+        int dr[4] = {-1, 0, 1, 0};
+        int dc[4] = {0, 1, 0, -1};
+
+        // Step 2: BFS traversal
+        while (!q.empty()) {
+            auto [r, c] = q.front();
+            q.pop();
+
+            for (int k = 0; k < 4; k++) {
+                int nr = r + dr[k];
+                int nc = c + dc[k];
+
+                // Boundary + shorter distance check
+                if (nr >= 0 && nc >= 0 && nr < n && nc < m) {
+                    if (dist[nr][nc] > dist[r][c] + 1) {
+                        dist[nr][nc] = dist[r][c] + 1;
+                        q.push({nr, nc});
+                    }
+                }
+            }
+        }
+
+        return dist;
+    }
+};
+⏱️ Time and Space Complexity
+Aspect	Complexity	Explanation
+Time	O(m * n)	Each cell processed once
+Space	O(m * n)	For distance matrix + queue
+
+🔁 Pattern Recognition
+This problem belongs to “Multi-source BFS on grids” — a super important pattern.
+
+You’ve already seen it in:
+
+✅ 994. Rotting Oranges
+
+✅ 286. Walls and Gates
+
+✅ 1091. Shortest Path in Binary Matrix
+
+✅ 200. Number of Islands (similar traversal, but with DFS)
+
+🎯 Tricks to Remember
+Trick	Description
+💡 Reverse Thinking	Start from zeros → find distance for ones (not vice versa).
+🔄 Multi-Source BFS	Push all sources (zeros) in the queue at once.
+🧭 Direction Arrays	Always use {dr, dc} pattern for 4-way traversal.
+🚫 Don’t Revisit	Only push to queue when dist is updated (shorter path found).
+
+💬 Follow-up Questions (for F2F / Nutanix Style)
+What if diagonal moves are allowed (8 directions)?
+→ Add 4 extra directions in the BFS.
+
+What if instead of distance, you need the path to nearest 0?
+→ Store parent pointers and reconstruct path.
+
+Can you solve it using DP (two passes)?
+→ Yes, one pass top-left to bottom-right, second bottom-right to top-left.
+
+Would you like me to show that DP Two-Pass solution (it’s often asked as a follow-up optimization question at Nutanix)?
+
+
+
+
+
+
+
+You said:
+yes
+
+
+ChatGPT said:
+Perfect ✅ — let’s now go through the Dynamic Programming (DP) Two-Pass Solution for Leetcode 542 — 01 Matrix, just like a real Nutanix F2F round where they say:
+
+“Can you do it without BFS, maybe using DP in a single or two passes?”
+
+🧠 Interview Round 2 — Optimization / DP Approach
+Interviewer:
+Nice BFS solution!
+Now suppose BFS isn’t allowed — can you find a pure DP approach?
+
+Candidate (You):
+Yes.
+If we think carefully, each cell’s distance to nearest 0 depends on its neighbours.
+
+For example, to compute dist[i][j], we can use:
+
+𝑑
+𝑖
+𝑠
+𝑡
+[
+𝑖
+]
+[
+𝑗
+]
+=
+min
+⁡
+(
+top
+,
+left
+,
+bottom
+,
+right
+)
++
+1
+dist[i][j]=min(top,left,bottom,right)+1
+But we can’t get all directions in one pass — so we use two passes:
+
+First pass: Top-left to bottom-right → gets minimum from top and left
+
+Second pass: Bottom-right to top-left → gets minimum from bottom and right
+
+⚙️ Step-by-Step Logic
+Let’s break it down clearly.
+
+Step 1️⃣ — Initialize
+If mat[i][j] == 0, then dist[i][j] = 0.
+Else initialize as a large value (e.g., 1e9).
+
+Step 2️⃣ — Pass 1 (Top-left → Bottom-right)
+For each cell:
+
+lua
+Copy code
+if (mat[i][j] != 0)
+    dist[i][j] = min(dist[i][j],
+                     min(dist[i-1][j], dist[i][j-1]) + 1)
+We only check top and left neighbors (since bottom/right are not processed yet).
+
+Step 3️⃣ — Pass 2 (Bottom-right → Top-left)
+For each cell:
+
+lua
+Copy code
+if (mat[i][j] != 0)
+    dist[i][j] = min(dist[i][j],
+                     min(dist[i+1][j], dist[i][j+1]) + 1)
+Now we consider bottom and right neighbors.
+
+This gives the final shortest distance.
+
+🧩 Dry Run Example
+Input:
+
+csharp
+Copy code
+mat = [
+  [0,0,0],
+  [0,1,0],
+  [1,1,1]
+]
+Pass 1 (top-left → bottom-right):
+Initial dist:
+
+css
+Copy code
+[ [0,0,0],
+  [0,∞,0],
+  [∞,∞,∞] ]
+Processing row by row:
+
+(1,1): min(top=0, left=0) + 1 = 1 → dist[1][1]=1
+
+(2,0): min(top=0,left=∞)+1=1
+
+(2,1): min(top=1,left=1)+1=2
+
+(2,2): min(top=0,left=2)+1=1
+
+After Pass 1:
+
+css
+Copy code
+[ [0,0,0],
+  [0,1,0],
+  [1,2,1] ]
+Pass 2 (bottom-right → top-left):
+Nothing improves here (already minimal).
+
+✅ Final Answer:
+
+css
+Copy code
+[ [0,0,0],
+  [0,1,0],
+  [1,2,1] ]
+🧑‍💻 Code — C++ (DP Two-Pass)
+cpp
+Copy code
+class Solution {
+public:
+    vector<vector<int>> updateMatrix(vector<vector<int>>& mat) {
+        int n = mat.size(), m = mat[0].size();
+        vector<vector<int>> dist(n, vector<int>(m, 1e9));
+
+        // Step 1: Initialization
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (mat[i][j] == 0)
+                    dist[i][j] = 0;
+            }
+        }
+
+        // Step 2: Top-left → Bottom-right
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (mat[i][j] != 0) {
+                    if (i > 0)
+                        dist[i][j] = min(dist[i][j], dist[i - 1][j] + 1);
+                    if (j > 0)
+                        dist[i][j] = min(dist[i][j], dist[i][j - 1] + 1);
+                }
+            }
+        }
+
+        // Step 3: Bottom-right → Top-left
+        for (int i = n - 1; i >= 0; i--) {
+            for (int j = m - 1; j >= 0; j--) {
+                if (mat[i][j] != 0) {
+                    if (i < n - 1)
+                        dist[i][j] = min(dist[i][j], dist[i + 1][j] + 1);
+                    if (j < m - 1)
+                        dist[i][j] = min(dist[i][j], dist[i][j + 1] + 1);
+                }
+            }
+        }
+
+        return dist;
+    }
+};
+⏱️ Time and Space Complexity
+Aspect	Complexity	Explanation
+Time	O(m * n)	Two full matrix passes
+Space	O(m * n)	For the dist matrix (no queue)
+
+🧩 Comparison: BFS vs DP
+Approach	Idea	Space	Advantage
+BFS	Multi-source queue propagation	O(mn)	Intuitive, works for all movement types
+DP Two-pass	Two directional sweeps	O(mn)	No queue, pure math, faster in practice
+
+🧭 Pattern Insight
+This “two-pass DP trick” is a golden pattern for grid problems where:
+
+Distances depend on 4-neighbor directions.
+
+No weighted edges.
+
+Local updates converge with two directional sweeps.
+
+Used in:
+
+🏰 286. Walls and Gates
+
+🧊 329. Longest Increasing Path (DP variation)
+
+💥 64. Minimum Path Sum (one directional)
+
+🎯 Interview Takeaway
+Level	What interviewer checks
+Round 1	Can you identify BFS pattern?
+Round 2	Can you optimize using DP without BFS?
+Round 3	Can you derive the recurrence and direction logic?
